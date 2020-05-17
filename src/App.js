@@ -1,26 +1,55 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import "./App.css";
+import Todo from "./Todo";
+import axios from "axios";
+import ErrorBoundary from "./ErrorBoundary";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends React.Component {
+  state = {
+    loading: true,
+    todoList: [],
+  };
+  componentDidMount() {
+    axios
+      .get("http://localhost:3000/todos")
+      .then(({ data: todoList }) => {
+        this.setState({ todoList, loading: false });
+      })
+      .catch((err) => console.log(err));
+  }
+
+  componentDidUpdate() {
+    if (this.state.loading) {
+      axios
+        .get("http://localhost:3000/todos")
+        .then(({ data: todoList }) => {
+          this.setState({ todoList, loading: false });
+        })
+        .catch((err) => console.log(err));
+    }
+  }
+
+  todoAdded({ title }) {
+    axios
+      .post("http://localhost:3000/todo", { title, completed: false })
+      .then(() => {
+        this.setState({ loading: true });
+      });
+  }
+  render() {
+    return (
+      <div className="App">
+        <ErrorBoundary>
+          {(this.state.loading && "Loading") || (
+            <Todo
+              list={this.state.todoList}
+              onAdd={this.todoAdded.bind(this)}
+            ></Todo>
+          )}
+        </ErrorBoundary>
+      </div>
+    );
+  }
 }
 
 export default App;
